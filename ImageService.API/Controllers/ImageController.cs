@@ -54,5 +54,11 @@ namespace ImageService.API.Controllers
             var response = await _imageService.DeleteImagesAsync(id, cancellationToken);
             return Ok(response);
         }
+
+        [HttpGet("ping")]
+        public IActionResult Ping()
+        {
+            return Ok("pong");
+        }
     }
 }
