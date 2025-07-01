@@ -54,6 +54,7 @@ jobs:
       with:
         inlineScript: |
           az webapp config appsettings set \
+            --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
             --name axeleronimages \
             --resource-group MyResourceGroup \
             --settings \
