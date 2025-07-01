@@ -11,6 +11,7 @@ jobs:
 
     env:
       AzureBlobStorage__ConnectionString: ${{ secrets.AZURE_BLOB_STORAGE_CONNECTION_STRING }}
+    env:
       ApplicationInsights__InstrumentationKey: ${{ secrets.APPLICATION_INSIGHTS_INSTRUMENTATION_KEY }}
       
     steps:
