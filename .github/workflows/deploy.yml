@@ -52,11 +52,6 @@ jobs:
     - name: Set Azure App Service environment variables
       uses: azure/CLI@v1
       with:
+        azcliversion: 2.74.0
         inlineScript: |
-          az webapp config appsettings set \
-            --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
-            --name axeleronimages \
-            --resource-group MyResourceGroup \
-            --settings \
-              AzureBlobStorage__ConnectionString="${{ secrets.AZUREBLOBSTORAGE_CONNECTIONSTRING }}" \
-              ApplicationInsights__InstrumentationKey="${{ secrets.APPLICATIONINSIGHTS_INSTRUMENTATIONKEY }}"
+          az webapp config appsettings set --resource-group MyResourceGroup --name axeleronimages --settings AzureBlobStorage__ConnectionString="${{ secrets.AZURE_BLOB_STORAGE_CONNECTIONSTRING }}" ApplicationInsights__InstrumentationKey="${{ secrets.APPLICATION_INSIGHTS_INSTRUMENTATION_KEY }}"
