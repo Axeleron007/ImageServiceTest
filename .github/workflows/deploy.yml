@@ -12,7 +12,7 @@ jobs:
     env:
       ApplicationInsights__InstrumentationKey: ${{ secrets.APPLICATIONINSIGHTS_INSTRUMENTATIONKEY }}
       AzureBlobStorage__ConnectionString: ${{ secrets.AZUREBLOBSTORAGE_CONNECTIONSTRING }}
-      
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
@@ -34,20 +34,28 @@ jobs:
     - name: List publish folder contents
       run: ls -la publish
 
-    - name: Run tests
+    - name: Run unit tests
       run: dotnet test ./ImageService.sln --no-build --configuration Release --verbosity normal
 
-    - name: 'Login via Azure CLI'
+    - name: Login via Azure CLI
       uses: azure/login@v1
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: 'Deploy to Azure Web App'
+    - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
         app-name: 'axeleronimages'
         publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE }}
         package: './publish'
-        app-settings: |
-          AzureBlobStorage__ConnectionString=${{ secrets.AZUREBLOBSTORAGE_CONNECTIONSTRING }}
-          ApplicationInsights__InstrumentationKey=${{ secrets.APPLICATIONINSIGHTS_INSTRUMENTATIONKEY }}
+
+    - name: Set Azure App Service environment variables
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |
+          az webapp config appsettings set \
+            --name axeleronimages \
+            --resource-group MyResourceGroup \
+            --settings \
+              AzureBlobStorage__ConnectionString="${{ secrets.AZUREBLOBSTORAGE_CONNECTIONSTRING }}" \
+              ApplicationInsights__InstrumentationKey="${{ secrets.APPLICATIONINSIGHTS_INSTRUMENTATIONKEY }}"
