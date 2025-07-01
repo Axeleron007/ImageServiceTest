@@ -57,9 +57,14 @@ public class Startup
         });
     }
 
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IConfiguration configuration)
     {
         app.UseMiddleware<ErrorHandlingMiddleware>();
+
+        var builder = new ConfigurationBuilder()
+            .AddConfiguration(configuration);
+
+        _configuration = builder.Build();
 
         if (env.IsDevelopment())
         {
