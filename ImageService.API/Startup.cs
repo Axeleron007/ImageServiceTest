@@ -37,7 +37,7 @@ public class Startup
 
         services.AddSingleton(x =>
         {
-            var connectionString = _configuration["AzureBlobStorage:ConnectionString"];
+            var connectionString = _configuration["AzureBlobStorageConnectionString"];
             var containerName = "images";
             var client = new BlobContainerClient(connectionString, containerName);
             client.CreateIfNotExists();
