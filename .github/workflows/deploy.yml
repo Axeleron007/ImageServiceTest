@@ -25,11 +25,8 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore
 
-    - name: Build
-      run: dotnet publish ./ImageService.API/ImageService.API.csproj -c Release -o publish
-
     - name: Publish
-      run: dotnet publish -c Release -o publish
+      run: dotnet publish ./ImageService.API/ImageService.API.csproj -c Release -o publish
 
     - name: List publish folder contents
       run: ls -la publish
