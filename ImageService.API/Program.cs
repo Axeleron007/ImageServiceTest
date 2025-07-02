@@ -8,7 +8,15 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        CreateHostBuilder(args).Build().Run();
+        try
+        {
+            CreateHostBuilder(args).Build().Run();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Host terminated unexpectedly: {ex}");
+            throw;
+        }
     }
 
     public static IHostBuilder CreateHostBuilder(string[] args) =>

@@ -25,12 +25,12 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        var builder = new ConfigurationBuilder()
-            .SetBasePath(AppContext.BaseDirectory)
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-            .AddEnvironmentVariables();
+        //var builder = new ConfigurationBuilder()
+        //    .SetBasePath(AppContext.BaseDirectory)
+        //    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+        //    .AddEnvironmentVariables();
 
-        _configuration = builder.Build();
+        //_configuration = builder.Build();
 
         services.AddControllers();
 
@@ -38,10 +38,11 @@ public class Startup
 
         services.AddSingleton(x =>
         {
+            var connectionString = _configuration["AzureBlobStorageConnectionString"];
+            var containerName = "images";
+
             try
             {
-                var connectionString = _configuration["AzureBlobStorageConnectionString"];
-                var containerName = "images";
                 var client = new BlobContainerClient(connectionString, containerName);
                 client.CreateIfNotExists();
                 return client;
@@ -70,8 +71,8 @@ public class Startup
     {
         app.UseMiddleware<ErrorHandlingMiddleware>();
 
-        var builder = new ConfigurationBuilder()
-            .AddConfiguration(configuration);
+        //var builder = new ConfigurationBuilder()
+        //    .AddConfiguration(configuration);
 
         _configuration = builder.Build();
 
