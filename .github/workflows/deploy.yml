@@ -26,7 +26,7 @@ jobs:
       run: dotnet restore
 
     - name: Build
-      run: dotnet build --configuration Release --no-restore
+      run: dotnet publish ./ImageService.API/ImageService.API.csproj -c Release -o publish
 
     - name: Publish
       run: dotnet publish -c Release -o publish
