@@ -32,7 +32,7 @@ jobs:
       run: ls -la publish
 
     - name: Run unit tests
-      run: dotnet test ./ImageService.sln --no-build --configuration Release --verbosity normal
+      run: dotnet test ./ImageService.Tests/ImageService.Tests.csproj --no-build --configuration Release --verbosity normal
 
     - name: Login via Azure CLI
       uses: azure/login@v1
