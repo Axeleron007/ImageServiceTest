@@ -33,106 +33,53 @@ public class ImageService : IImageService
         _logger = logger;
     }
 
-    /// <summary>
-    /// Upload original image
-    /// </summary>
-    /// <param name="image"></param>
-    /// <returns></returns>
-    /// <exception cref="BusinessValidationException"></exception>
     public async Task<GetImageResponseDto> UploadImageAsync(IFormFile image, CancellationToken cancellationToken)
     {
-        var extension = string.Join(string.Empty, Path.GetExtension(image.FileName).Skip(1));
-        var supportedExtensions = _configuration["SupportedImageExtensions"].Split(",");
-
-        if (!supportedExtensions.Contains(extension))
-        {
-            _logger.LogError($"Unsupported image extension: {extension}.");
-            throw new BusinessValidationException("Unsupported image extension.");
-        }
-
-        var maxImageSizeInBytes = long.Parse(_configuration["MaxImageSizeInBytes"]);
-
-        if (image.Length > maxImageSizeInBytes)
-        {
-            _logger.LogError($"File too large and cannot be bigger than {maxImageSizeInBytes} bytes.");
-            throw new BusinessValidationException("File too large."); // No more than 1 GB file
-        }
+        ValidateImageExtension(image.FileName);
+        ValidateImageSize(image.Length);
 
         var id = Guid.NewGuid().ToString();
-
-        var blob = _containerWrapper.GetBlockBlobClient(id);
+        var blobClient = _containerWrapper.GetBlockBlobClient(id);
 
         using var imageStream = image.OpenReadStream();
-        using var imageInfo = await Image.LoadAsync<Rgba32>(imageStream);
-        var width = imageInfo.Width;
-        var height = imageInfo.Height;
+        using var imageInfo = await Image.LoadAsync<Rgba32>(imageStream, cancellationToken);
 
         imageStream.Position = 0;
+        await UploadToBlobAsync(blobClient, image.OpenReadStream(), image.ContentType, cancellationToken);
 
-        await blob.UploadAsync(image.OpenReadStream(), new BlobUploadOptions
-        {
-            TransferOptions = new StorageTransferOptions
-            {
-                MaximumTransferSize = 4 * 1024 * 1024, // 4 MB blocks
-                MaximumConcurrency = 4                 // parallelism
-            },
-            HttpHeaders = new BlobHttpHeaders { ContentType = image.ContentType }
-        }, cancellationToken);
-
-        return BuildSuccessImageResponse(id, blob.Uri.ToString());
+        return BuildImageResponse(id, blobClient.Uri.ToString());
     }
 
-    /// <summary>
-    /// Retrieve image by Id
-    /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    /// <exception cref="BusinessValidationException"></exception>
     public async Task<GetImageResponseDto> GetImagePathAsync(string id, CancellationToken cancellationToken)
     {
         var blob = _containerWrapper.GetBlockBlobClient(id);
 
         if (!await blob.ExistsAsync(cancellationToken))
         {
-            _logger.LogError($"Image with id {id} not found.");
-            throw new BusinessValidationException($"Image with id {id} not found.");
+            LogAndThrowNotFound(id);
         }
 
-        return BuildSuccessImageResponse(id, blob.Uri.ToString());
+        return BuildImageResponse(id, blob.Uri.ToString());
     }
 
-    /// <summary>
-    /// Resize and save image to target height with original aspect ratio
-    /// </summary>
-    /// <param name="id"></param>
-    /// <param name="targetHeight"></param>
-    /// <returns></returns>
-    /// <exception cref="BusinessValidationException"></exception>
-    /// <exception cref="TargetHeightExceededException"></exception>
     public async Task<GetImageResponseDto> ResizeAndSaveAsync(string id, int targetHeight, CancellationToken cancellationToken)
     {
         var resizedName = $"{id}_{targetHeight}";
-
         var resizedBlob = _containerWrapper.GetBlockBlobClient(resizedName);
 
-        // Fast path: If already resized
-        if (await resizedBlob.ExistsAsync())
+        if (await resizedBlob.ExistsAsync(cancellationToken))
         {
-            return BuildSuccessImageResponse(id, resizedBlob.Uri.ToString());
+            return BuildImageResponse(id, resizedBlob.Uri.ToString());
         }
 
         var originalBlob = _containerWrapper.GetBlockBlobClient(id);
-
         if (!await originalBlob.ExistsAsync(cancellationToken))
         {
-            _logger.LogError($"Original image not found by Id: {id}.");
-            throw new BusinessValidationException("Original image not found.");
+            LogAndThrowNotFound(id);
         }
 
         var download = await originalBlob.DownloadAsync(cancellationToken);
-        var stream = download.Value.Content;
-
-        var (image, format) = await ImageHelper.LoadImageAndFormatAsync(stream);
+        var (image, format) = await ImageHelper.LoadImageAndFormatAsync(download.Value.Content);
 
         if (targetHeight > image.Height)
         {
@@ -143,7 +90,6 @@ public class ImageService : IImageService
         image.Mutate(x => x.Resize(targetWidth, targetHeight));
 
         using var outStream = _streamManager.GetStream();
-
         if (format != null)
             await image.SaveAsync(outStream, format, cancellationToken);
         else
@@ -151,41 +97,26 @@ public class ImageService : IImageService
 
         outStream.Position = 0;
 
-        await resizedBlob.UploadAsync(outStream, new BlobUploadOptions
-        {
-            TransferOptions = new StorageTransferOptions
-            {
-                MaximumTransferSize = 4 * 1024 * 1024, // 4 MB blocks
-                MaximumConcurrency = 4                 // parallelism
-            },
-            HttpHeaders = new BlobHttpHeaders { ContentType = download.Value.Details.ContentType }
-        });
+        await UploadToBlobAsync(resizedBlob, outStream, download.Value.Details.ContentType, cancellationToken);
 
-        return BuildSuccessImageResponse(id, resizedBlob.Uri.ToString());
+        return BuildImageResponse(id, resizedBlob.Uri.ToString());
     }
 
-    /// <summary>
-    /// Delete original and resized images by Id
-    /// </summary>
-    /// <param name="id"></param>
-    /// <returns></returns>
-    /// <exception cref="BusinessValidationException"></exception>
     public async Task<DeleteImageResponseDto> DeleteImagesAsync(string id, CancellationToken cancellationToken)
     {
-        var notFound = true;
-
         var blobs = _containerWrapper.GetBlobsAsync(prefix: id);
+        var anyFound = false;
+
         await foreach (var blobItem in blobs)
         {
             var blobClient = _containerWrapper.GetBlockBlobClient(blobItem.Name);
             await blobClient.DeleteIfExistsAsync(cancellationToken: cancellationToken);
-            notFound = false;
+            anyFound = true;
         }
 
-        if (notFound)
+        if (!anyFound)
         {
-            _logger.LogError($"Image not found by Id: {id}.");
-            throw new BusinessValidationException("Image not found.");
+            LogAndThrowNotFound(id);
         }
 
         return new DeleteImageResponseDto
@@ -195,13 +126,51 @@ public class ImageService : IImageService
         };
     }
 
-    private static GetImageResponseDto BuildSuccessImageResponse(string id, string url)
+    private void ValidateImageExtension(string fileName)
     {
-        return new GetImageResponseDto
+        var extension = Path.GetExtension(fileName).TrimStart('.').ToLowerInvariant();
+        var allowed = _configuration["SupportedImageExtensions"]?.Split(",") ?? Array.Empty<string>();
+
+        if (!allowed.Contains(extension))
         {
-            Id = id,
-            Url = url,
-            Message = "Success"
-        };
+            _logger.LogError("Unsupported image extension: {Extension}", extension);
+            throw new BusinessValidationException("Unsupported image extension.");
+        }
     }
+
+    private void ValidateImageSize(long size)
+    {
+        var maxSize = long.Parse(_configuration["MaxImageSizeInBytes"]);
+        if (size > maxSize)
+        {
+            _logger.LogError("File too large. Limit: {MaxSize} bytes", maxSize);
+            throw new BusinessValidationException("File too large.");
+        }
+    }
+
+    private async Task UploadToBlobAsync(Azure.Storage.Blobs.Specialized.BlockBlobClient blob, Stream data, string contentType, CancellationToken cancellationToken)
+    {
+        await blob.UploadAsync(data, new BlobUploadOptions
+        {
+            TransferOptions = new StorageTransferOptions
+            {
+                MaximumTransferSize = 4 * 1024 * 1024,
+                MaximumConcurrency = 4
+            },
+            HttpHeaders = new BlobHttpHeaders { ContentType = contentType }
+        }, cancellationToken);
+    }
+
+    private void LogAndThrowNotFound(string id)
+    {
+        _logger.LogError("Image with id {Id} not found.", id);
+        throw new BusinessValidationException($"Image with id {id} not found.");
+    }
+
+    private static GetImageResponseDto BuildImageResponse(string id, string url) => new()
+    {
+        Id = id,
+        Url = url,
+        Message = "Success"
+    };
 }
