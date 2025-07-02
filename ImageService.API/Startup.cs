@@ -38,11 +38,19 @@ public class Startup
 
         services.AddSingleton(x =>
         {
-            var connectionString = _configuration["AzureBlobStorageConnectionString"];
-            var containerName = "images";
-            var client = new BlobContainerClient(connectionString, containerName);
-            client.CreateIfNotExists();
-            return client;
+            try
+            {
+                var connectionString = _configuration["AzureBlobStorageConnectionString"];
+                var containerName = "images";
+                var client = new BlobContainerClient(connectionString, containerName);
+                client.CreateIfNotExists();
+                return client;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ERROR initializing BlobContainerClient: {ex.Message}");
+                throw;
+            }
         });
 
         services.AddTransient<ErrorHandlingMiddleware>();
