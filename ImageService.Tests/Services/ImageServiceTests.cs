@@ -202,7 +202,7 @@ public class ImageServiceTests
         // Assert
         await act.Should()
             .ThrowAsync<BusinessValidationException>()
-            .WithMessage("Image not found.");
+            .WithMessage($"Image with id {id} not found.");
     }
 
     [Fact]
@@ -268,7 +268,7 @@ public class ImageServiceTests
 
         // Assert
         await act.Should().ThrowAsync<BusinessValidationException>()
-            .WithMessage("Original image not found.");
+            .WithMessage($"Image with id {id} not found.");
     }
 
     [Fact]
