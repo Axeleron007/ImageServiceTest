@@ -5,9 +5,9 @@ using ImageService.Core;
 using ImageService.Core.Interfaces;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.IO;
 using Microsoft.OpenApi.Models;
 
@@ -58,12 +58,15 @@ public class Startup
     {
         app.UseMiddleware<ErrorHandlingMiddleware>();
 
-        if (env.IsDevelopment())
+        app.Use(async (context, next) =>
         {
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Image API v1"));
-        }
+            context.Features.Get<IHttpMaxRequestBodySizeFeature>().MaxRequestBodySize = long.Parse(_configuration["MaxImageSizeInBytes"]);
+            await next.Invoke();
+        });
+
+        app.UseSwagger();
+        app.UseSwaggerUI(c =>
+            c.SwaggerEndpoint("/swagger/v1/swagger.json", "Image API v1"));
 
         app.UseRouting();
 
