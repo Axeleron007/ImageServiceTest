@@ -36,6 +36,7 @@ public class ErrorHandlingMiddleware : IMiddleware
                 Details = ex.Message
             };
 
+            context.Response.ContentType = "application/json";
             var json = JsonSerializer.Serialize(response);
             await context.Response.WriteAsync(json);
         }
@@ -51,6 +52,7 @@ public class ErrorHandlingMiddleware : IMiddleware
                 Details = ex.Message
             };
 
+            context.Response.ContentType = "application/json";
             var json = JsonSerializer.Serialize(response);
             await context.Response.WriteAsync(json);
         }
@@ -67,6 +69,7 @@ public class ErrorHandlingMiddleware : IMiddleware
                 Details = ex.Message
             };
 
+            context.Response.ContentType = "application/json";
             var json = JsonSerializer.Serialize(response);
             await context.Response.WriteAsync(json);
         }

@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IO;
 using Microsoft.OpenApi.Models;
-using System;
 
 namespace ImageService.API;
 
@@ -37,17 +36,9 @@ public class Startup
             var connectionString = _configuration["AzureBlobStorageConnectionString"];
             var containerName = "images";
 
-            try
-            {
-                var client = new BlobContainerClient(connectionString, containerName);
-                client.CreateIfNotExists();
-                return client;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ERROR initializing BlobContainerClient: {ex.Message}");
-                throw;
-            }
+            var client = new BlobContainerClient(connectionString, containerName);
+            client.CreateIfNotExists();
+            return client;
         });
 
         services.AddTransient<ErrorHandlingMiddleware>();
