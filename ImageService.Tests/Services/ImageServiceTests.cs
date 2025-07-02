@@ -5,6 +5,7 @@ using FluentAssertions;
 using ImageService.Core.Exceptions;
 using ImageService.Core.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using Moq;
 using SixLabors.ImageSharp;
@@ -16,6 +17,7 @@ public class ImageServiceTests
 {
     private readonly Mock<IBlobContainerWrapper> _blobContainerWrapperMock;
     private readonly Mock<IConfiguration> _configurationMock;
+    private readonly Mock<ILogger<Core.ImageService>> _loggerMock;
     private readonly RecyclableMemoryStreamManager _streamManager;
     private string _url = "https://fakestorageaccount.blob.core.windows.net/container/blob-name";
     private readonly CancellationToken _cancellationToken = CancellationToken.None;
@@ -27,11 +29,13 @@ public class ImageServiceTests
         _blobContainerWrapperMock = new Mock<IBlobContainerWrapper>();
         _configurationMock = new Mock<IConfiguration>();
         _streamManager = new RecyclableMemoryStreamManager();
+        _loggerMock = new Mock<ILogger<Core.ImageService>>();
 
-        _imageService = new ImageService.Core.ImageService(
+        _imageService = new Core.ImageService(
             _blobContainerWrapperMock.Object,
             _streamManager,
-            _configurationMock.Object);
+            _configurationMock.Object,
+            _loggerMock.Object);
     }
 
     [Fact]
