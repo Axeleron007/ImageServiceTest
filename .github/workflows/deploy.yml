@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ApplicationInsightsInstrumentationKey: ${{ secrets.APPLICATION_INSIGHTS_INSTRUMENTATION_KEY }}
-      AzureBlobStorageConnectionString: ${{ secrets.AZURE_BLOB_STORAGE_CONNECTIONSTRING }}
+      ApplicationInsightsInstrumentationKey: ${{ secrets.APPLICATIONINSIGHTS_INSTRUMENTATIONKEY }}
+      AzureBlobStorageConnectionString: ${{ secrets.AZUREBLOBSTORAGE_CONNECTIONSTRING }}
 
     steps:
     - name: Checkout repository
@@ -53,4 +53,4 @@ jobs:
       with:
         azcliversion: 2.74.0
         inlineScript: |
-          az webapp config appsettings set --resource-group MyResourceGroup --name axeleronimages --settings AzureBlobStorageConnectionString="${{ secrets.AZURE_BLOB_STORAGE_CONNECTIONSTRING }}" ApplicationInsightsInstrumentationKey="${{ secrets.APPLICATION_INSIGHTS_INSTRUMENTATION_KEY }}" SupportedImageExtensions="jpg,png,gif" MaxImageSizeInBytes="1073741824"
+          az webapp config appsettings set --resource-group MyResourceGroup --name axeleronimages --settings AzureBlobStorageConnectionString="${{ secrets.AZUREBLOBSTORAGE_CONNECTIONSTRING }}" ApplicationInsightsInstrumentationKey="${{ secrets.APPLICATIONINSIGHTS_INSTRUMENTATIONKEY }}" SupportedImageExtensions="jpg,png,gif" MaxImageSizeInBytes="1073741824"
