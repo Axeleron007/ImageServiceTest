@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      ApplicationInsights__InstrumentationKey: ${{ secrets.APPLICATION_INSIGHTS_INSTRUMENTATION_KEY }}
-      AzureBlobStorage__ConnectionString: ${{ secrets.AZURE_BLOB_STORAGE_CONNECTIONSTRING }}
+      ApplicationInsightsInstrumentationKey: ${{ secrets.APPLICATION_INSIGHTS_INSTRUMENTATION_KEY }}
+      AzureBlobStorageConnectionString: ${{ secrets.AZURE_BLOB_STORAGE_CONNECTIONSTRING }}
 
     steps:
     - name: Checkout repository
