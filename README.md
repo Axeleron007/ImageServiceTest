@@ -49,9 +49,10 @@ This will open the interactive API documentation.
 
 ## Main API Endpoints
 
-Method	Endpoint					Description
-POST	/api/images/upload			Upload a new image (multipart/form-data)
-GET		/api/images/{id}			Retrieve the original image path
-GET		/api/images/{id}/variation	Get a resized image by height (targetHeight)
-GET		/api/images/{id}/thumbnail	Get a 160px thumbnail of the image
-DELETE	/api/images/{id}			Delete all versions of the specified image
+| Method | Endpoint                     | Description                                    |
+|--------|------------------------------|------------------------------------------------|
+| POST   | `/api/images/upload`         | Upload a new image (multipart/form-data)       |
+| GET    | `/api/images/{id}`           | Retrieve the original image path               |
+| GET    | `/api/images/{id}/variation` | Get a resized image by height (`targetHeight`) |
+| GET    | `/api/images/{id}/thumbnail` | Get a 160px thumbnail of the image             |
+| DELETE | `/api/images/{id}`           | Delete all versions of the specified image     |
