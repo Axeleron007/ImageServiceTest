@@ -6,6 +6,7 @@ using ImageService.Core.Helpers;
 using ImageService.Core.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IO;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -18,15 +19,18 @@ public class ImageService : IImageService
     private readonly IBlobContainerWrapper _containerWrapper;
     private readonly RecyclableMemoryStreamManager _streamManager;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<ImageService> _logger;
 
     public ImageService(
         IBlobContainerWrapper containerWrapper,
         RecyclableMemoryStreamManager streamManager,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<ImageService> logger)
     {
         _containerWrapper = containerWrapper;
         _streamManager = streamManager;
         _configuration = configuration;
+        _logger = logger;
     }
 
     /// <summary>
@@ -42,11 +46,15 @@ public class ImageService : IImageService
 
         if (!supportedExtensions.Contains(extension))
         {
+            _logger.LogError($"Unsupported image extension: {extension}.");
             throw new BusinessValidationException("Unsupported image extension.");
         }
 
-        if (image.Length > int.Parse(_configuration["MaxImageSizeInBytes"]))
+        var maxImageSizeInBytes = long.Parse(_configuration["MaxImageSizeInBytes"]);
+
+        if (image.Length > maxImageSizeInBytes)
         {
+            _logger.LogError($"File too large and cannot be bigger than {maxImageSizeInBytes} bytes.");
             throw new BusinessValidationException("File too large."); // No more than 1 GB file
         }
 
@@ -86,6 +94,7 @@ public class ImageService : IImageService
 
         if (!await blob.ExistsAsync(cancellationToken))
         {
+            _logger.LogError($"Image with id {id} not found.");
             throw new BusinessValidationException($"Image with id {id} not found.");
         }
 
@@ -116,6 +125,7 @@ public class ImageService : IImageService
 
         if (!await originalBlob.ExistsAsync(cancellationToken))
         {
+            _logger.LogError($"Original image not found by Id: {id}.");
             throw new BusinessValidationException("Original image not found.");
         }
 
@@ -174,6 +184,7 @@ public class ImageService : IImageService
 
         if (notFound)
         {
+            _logger.LogError($"Image not found by Id: {id}.");
             throw new BusinessValidationException("Image not found.");
         }
 

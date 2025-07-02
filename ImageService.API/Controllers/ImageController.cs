@@ -21,9 +21,7 @@ namespace ImageService.API.Controllers
         [HttpPost("upload")]
         public async Task<IActionResult> Upload([FromForm] ImageUploadRequest request, CancellationToken cancellationToken)
         {
-            var file = request.Image;
-
-            var response = await _imageService.UploadImageAsync(file, cancellationToken);
+            var response = await _imageService.UploadImageAsync(request.Image, cancellationToken);
             return Ok(response);
         }
 

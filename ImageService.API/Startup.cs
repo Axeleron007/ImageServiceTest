@@ -25,16 +25,12 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        //var builder = new ConfigurationBuilder()
-        //    .SetBasePath(AppContext.BaseDirectory)
-        //    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-        //    .AddEnvironmentVariables();
-
-        //_configuration = builder.Build();
-
         services.AddControllers();
 
-        services.AddApplicationInsightsTelemetry();
+        services.AddApplicationInsightsTelemetry(opt =>
+        {
+            opt.ConnectionString = _configuration["ApplicationInsightsInstrumentationKey"];
+        });
 
         services.AddSingleton(x =>
         {
@@ -70,11 +66,6 @@ public class Startup
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env, IConfiguration configuration)
     {
         app.UseMiddleware<ErrorHandlingMiddleware>();
-
-        //var builder = new ConfigurationBuilder()
-        //    .AddConfiguration(configuration);
-
-        //_configuration = builder.Build();
 
         if (env.IsDevelopment())
         {
