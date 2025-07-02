@@ -74,7 +74,7 @@ public class Startup
         //var builder = new ConfigurationBuilder()
         //    .AddConfiguration(configuration);
 
-        _configuration = builder.Build();
+        //_configuration = builder.Build();
 
         if (env.IsDevelopment())
         {
